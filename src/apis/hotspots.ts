@@ -7,7 +7,7 @@ const codeList = [];
 const choiceList = [];
 
 const openai = new OpenAI({
-    baseURL: "http://localhost:3000/api/openai",
+    baseURL: "http://localhost:5928/api/openai",
     apiKey: "ifdu",
     dangerouslyAllowBrowser: true,
 });
@@ -23,14 +23,14 @@ export async function autoCodeReview() {
 
         // console.log(pro);
 
-        const ret = await axios.post('http://localhost:3000/api/openai', {
+        const ret = await axios.post('http://localhost:5928/api/openai', {
             prompt: pro,
         });
 
-        // console.log(ret.data);
+        console.log(ret.data);
 
         choiceList.push([extractContent(ret.data), element[3]]);
-        // console.log(extractContent(ret.data));
+        console.log(extractContent(ret.data));
     });
 
     await Promise.all(promises);
@@ -43,8 +43,7 @@ export async function autoCodeReview() {
                     url: '/sonarcloud/api/hotspots/change_status',
                     data: {
                         "hotspot": element[1],
-                        "resolution": "ACKNOWLEDGED",
-                        "status": "REVIEWED"
+                        "status": "TO_REVIEW"
                     },
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -89,6 +88,7 @@ export async function autoCodeReview() {
 async function sendRequest() {
     const response = await axios.get('/sonarcloud/api/hotspots/search' + projectKey);
     var data: any;
+    console.log(response.data);
     return response.data;
 }
 
@@ -96,8 +96,13 @@ async function getRawCode(obj) {
 
     const promises = obj.hotspots.map(async (element) => {
         console.log(element.component);
-        const response = await axios.get("/sonarcloud/api/sources/raw?key=" + element.component);
-        codeList.push([response.data, element.line, element.message, element.key]);
+        const response = await axios.get("/sonarcloud/api/sources/lines?key=" + element.component);
+        var x = '';
+        response.data.sources.forEach(element => {
+            x = x + element.code.replace(/<[^>]+>/g, ''); + '\n';
+        });
+        // console.log(x);
+        codeList.push([x, element.line, element.message, element.key]);
         // console.log(response.data);
     })
 
