@@ -99,9 +99,9 @@ async function getRawCode(obj) {
         const response = await axios.get("/sonarcloud/api/sources/lines?key=" + element.component);
         var x = '';
         response.data.sources.forEach(element => {
-            x = x + element.code.replace(/<[^>]+>/g, ''); + '\n';
+            x = x + element.code.replace(/<span[^>]*>(.*?)<\/span>/g, '$1').replace(/&#(\d+);/g, (_, code) => String.fromCharCode(code)).replace(/&quot;/g, '"') + '\n';
         });
-        // console.log(x);
+        console.log(x);
         codeList.push([x, element.line, element.message, element.key]);
         // console.log(response.data);
     })
